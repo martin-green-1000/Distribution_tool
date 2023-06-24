@@ -699,8 +699,6 @@ server <- function(input, output,session) {
   
   observeEvent(input$saveBtn2, {
     
-    if(p_w() == 1234){
-    
     list_in <- as.data.frame(list.files(pattern="*.csv"))
     colnames(list_in)[1] <- "nme"
     files <- dplyr::filter(list_in, grepl(updated_string2,nme))
@@ -720,14 +718,14 @@ server <- function(input, output,session) {
       
     }
     
-    
+    if(p_w() == 1234){
       
       output$done <- renderText({
         paste0(nrow(files)," participants data received" )
       })
       
-      
     }
+  
     
     ### MODERATOR TAB 2 - NAMES PARTICIPANTS SUBMITTED
     
