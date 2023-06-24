@@ -18,13 +18,14 @@ RUN /rocker_scripts/install_tidyverse.sh
 
 RUN R -e "install.packages('shiny', repos='http://cran.rstudio.com/')"
 RUN R -e "install.packages('shinydashboard', repos='http://cran.rstudio.com/')"
-RUN R -e "install.packages('sortable', repos='http://cran.rstudio.com/')"
+RUN R -e "install.packages('tableHTML', repos='http://cran.rstudio.com/')"
 RUN R -e "install.packages('readr', repos='http://cran.rstudio.com/')"
 RUN R -e "install.packages('readxl', repos='http://cran.rstudio.com/')"
-RUN R -e "install.packages('bslib', repos='http://cran.rstudio.com/')"
-RUN R -e "install.packages('shinyFiles', repos='http://cran.rstudio.com/')"
+RUN R -e "install.packages('cli', repos='http://cran.rstudio.com/')"
+RUN R -e "install.packages('reshape2', repos='http://cran.rstudio.com/')"
 RUN R -e "install.packages('shinyjs', repos='http://cran.rstudio.com/')"
-RUN R -e "install.packages('fontawesome', repos='http://cran.rstudio.com/')"
+RUN R -e "install.packages('stringr', repos='http://cran.rstudio.com/')"
+RUN R -e "install.packages('triangle', repos='http://cran.rstudio.com/')"
 
 
 
@@ -33,7 +34,7 @@ COPY R ./app
 
 
 # expose port
-EXPOSE 5532
+EXPOSE 1080
 
 # run app on container start
-CMD ["R", "-e", "shiny::runApp('/app', host = '0.0.0.0', port = 5532)"]
+CMD ["R", "-e", "shiny::runApp('/app', host = '0.0.0.0', port = 1080)"]
