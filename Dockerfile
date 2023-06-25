@@ -28,13 +28,10 @@ RUN R -e "install.packages('stringr', repos='http://cran.rstudio.com/')"
 RUN R -e "install.packages('triangle', repos='http://cran.rstudio.com/')"
 
 
-
-
 COPY R ./app
 
-
 # expose port
-EXPOSE 1080
+EXPOSE 3080
 
 # run app on container start
-CMD ["R", "-e", "shiny::runApp('/app', host = '0.0.0.0', port = 1080)"]
+CMD ["R", "-e", "shiny::runApp('/app', host = '0.0.0.0', port = 3080)"]

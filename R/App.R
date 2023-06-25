@@ -1,6 +1,5 @@
 
 library(shiny)
-library(rlang)
 library(readr)
 library(readxl)
 library(tidyverse)
@@ -15,6 +14,8 @@ library(triangle)
 
 
 
+
+
 ui <- dashboardPage(
   
   dashboardHeader(titleWidth=870, title = span(" ", 
@@ -25,19 +26,19 @@ ui <- dashboardPage(
   
   
   dashboardSidebar(collapsed = TRUE, width = 600,
-                  column(8,  
-                   
-                   br(),
-                   tableOutput('table'),
-                   br(),
-                   br(),
-                   actionButton("saveBtn", "PRESS HERE TO SEND YOUR DATA", style="background-color:#ff8282;color:white; border-color:#ff8282;padding:4px; font-size:110%; font-family: Arial"),
-                   br(),
-                   column(8,  offset=1,
-                   tags$head(tags$style(HTML(".myclass3 pre {color: black;font-size:150%; background-color: lightgrey ;border-colour:lightgrey;  font-weight: bolder;font-size: 12px;font-family: Arial; width: 200px; }"))),
-                   div(class = "myclass3",verbatimTextOutput("submitted", placeholder = FALSE))
-                   
-                  ))          
+                   column(8,  
+                          
+                          br(),
+                          tableOutput('table'),
+                          br(),
+                          br(),
+                          actionButton("saveBtn", "PRESS HERE TO SEND YOUR DATA", style="background-color:#ff8282;color:white; border-color:#ff8282;padding:4px; font-size:110%; font-family: Arial"),
+                          br(),
+                          column(8,  offset=1,
+                                 tags$head(tags$style(HTML(".myclass3 pre {color: black;font-size:150%; background-color: lightgrey ;border-colour:lightgrey;  font-weight: bolder;font-size: 12px;font-family: Arial; width: 200px; }"))),
+                                 div(class = "myclass3",verbatimTextOutput("submitted", placeholder = FALSE))
+                                 
+                          ))          
   ),
   
   dashboardBody(
@@ -424,10 +425,15 @@ ui <- dashboardPage(
 
 server <- function(input, output,session) {
   
+  ## TAB TITLES
+  
+  ## TEXT FOR TABS ##
+  
+  # INUT FILES FROM SERVER
   
   names_dist <- as.data.frame(read_csv("distribution_in_list_3786452.csv"))
-                              
-
+  
+  
   if(nrow(names_dist)>10){
     names_dist_1 <- names_dist$V1[1:10]
   }else{
@@ -447,7 +453,7 @@ server <- function(input, output,session) {
     }else {
       ""
     }
-     
+    
   })
   output$tab3 <- renderText({
     if(nrow(names_dist)>2){
@@ -672,8 +678,13 @@ server <- function(input, output,session) {
   
   observeEvent(input$saveBtn, {
     
-    write.csv(abm_values2(), paste0(input$name, "_ABM_5638762_" ,updated_string2, format(Sys.Date(), format="%b_%d_%y"), ".csv"),append = FALSE, sep = " ", dec = ".",
-              row.names = FALSE, col.names = TRUE)
+    
+    
+    write_csv(abm_values2(), paste0(input$name, "_ABM_5638762_" ,updated_string2, format(Sys.Date(), format="%b_%d_%y"), ".csv"))
+    
+    input_file_2 <<- read_csv(paste0(input$name, "_ABM_5638762_" ,updated_string2, format(Sys.Date(), format="%b_%d_%y"), ".csv"))
+    
+    write_csv(input_file_2, paste0(input$name, "_ABM_5638762_" ,updated_string2, format(Sys.Date(), format="%b_%d_%y"), ".csv"))
     
     output$submitted <- renderText({
       ".... file submitted thank you"
@@ -704,28 +715,22 @@ server <- function(input, output,session) {
     files <- dplyr::filter(list_in, grepl(updated_string2,nme))
     files$name_included <- substr(files$nme,1,nchar(files$nme)-(26+ nchar(updated_string2)))
     
-    files_all <- as.data.frame(files) ## FOR THE LATER SERVER VIEWING OF FILES
-    
-    
     db_all <- data.frame()
     for( i in 1:nrow(files)){
-      
       test <- read_csv(files$nme[i])
       test$name <- files$nme[i]
-      test$name <- gsub(paste0("ABM_5638762",updated_string2),'',test$name)
-      test$rank <- seq(1, nrow(test),1)
+      test$name <- gsub(paste0("ABM_5638762_",updated_string2),'',test$name)
       db_all <- rbind(db_all, test)
-      
     }
     
-    if(p_w() == 1234){
+   if(p_w() == 1234){
       
       output$done <- renderText({
         paste0(nrow(files)," participants data received" )
       })
       
+      
     }
-  
     
     ### MODERATOR TAB 2 - NAMES PARTICIPANTS SUBMITTED
     
@@ -738,115 +743,7 @@ server <- function(input, output,session) {
       names_done()
     })
     
-    
-    
-    ### PLOT RESULTS
-    
-    
-    Var_1 <- db_all %>% filter(grepl(names_dist$V1[1], Variable))
-    Var_1_melt <- melt(Var_1)
-    output$plot1 <- renderPlot({
-      ggplot(Var_1_melt, aes(x=value, y=variable, fill = variable)) +
-        ylab("Elicited Quantity")+
-        xlab("Value")+
-        geom_boxplot()+ ggtitle(names_dist$V1[1])+
-        scale_fill_manual(values = c("THRESHOLD" = 'red'))+ theme(legend.position = "none",plot.title = element_text(size=28),axis.title=element_text(size=16),axis.text=element_text(size=16))
-    })
-    
-    Var_2 <- db_all %>% filter(grepl(names_dist$V1[2], Variable))
-    Var_2_melt <- melt(Var_2)
-    output$plot2 <- renderPlot({
-      ggplot(Var_2_melt, aes(x=value, y=variable, fill = variable)) +
-        ylab("Elicited Quantity")+
-        xlab("Value")+
-        geom_boxplot()+ ggtitle(names_dist$V1[2])+
-        scale_fill_manual(values = c("THRESHOLD" = 'red'))+ theme(legend.position = "none",plot.title = element_text(size=28),axis.title=element_text(size=16),axis.text=element_text(size=16))
-    })
-    
-    Var_3 <- db_all %>% filter(grepl(names_dist$V1[3], Variable))
-    Var_3_melt <- melt(Var_3)
-    output$plot3 <- renderPlot({
-      ggplot(Var_3_melt, aes(x=value, y=variable, fill = variable)) +
-        ylab("Elicited Quantity")+
-        xlab("Value")+
-        geom_boxplot()+ ggtitle(names_dist$V1[3])+
-        scale_fill_manual(values = c("THRESHOLD" = 'red'))+ theme(legend.position = "none",plot.title = element_text(size=28),axis.title=element_text(size=16),axis.text=element_text(size=16))
-    })
-    
-    Var_4 <- db_all %>% filter(grepl(names_dist$V1[4], Variable))
-    Var_4_melt <- melt(Var_4)
-    output$plot4 <- renderPlot({
-      ggplot(Var_4_melt, aes(x=value, y=variable, fill = variable)) +
-        ylab("Elicited Quantity")+
-        xlab("Value")+
-        geom_boxplot()+ ggtitle(names_dist$V1[4])+
-        scale_fill_manual(values = c("THRESHOLD" = 'red'))+ theme(legend.position = "none",plot.title = element_text(size=28),axis.title=element_text(size=16),axis.text=element_text(size=16))
-    })
-    
-    Var_5 <- db_all %>% filter(grepl(names_dist$V1[5], Variable))
-    Var_5_melt <- melt(Var_5)
-    output$plot5 <- renderPlot({
-      ggplot(Var_5_melt, aes(x=value, y=variable, fill = variable)) +
-        ylab("Elicited Quantity")+
-        xlab("Value")+
-        geom_boxplot()+ ggtitle(names_dist$V1[5])+
-        scale_fill_manual(values = c("THRESHOLD" = 'red'))+ theme(legend.position = "none",plot.title = element_text(size=28),axis.title=element_text(size=16),axis.text=element_text(size=16))
-    })
-    
-    Var_6 <- db_all %>% filter(grepl(names_dist$V1[6], Variable))
-    Var_6_melt <- melt(Var_6)
-    output$plot6 <- renderPlot({
-      ggplot(Var_6_melt, aes(x=value, y=variable, fill = variable)) +
-        ylab("Elicited Quantity")+
-        xlab("Value")+
-        geom_boxplot()+ ggtitle(names_dist$V1[6])+
-        scale_fill_manual(values = c("THRESHOLD" = 'red'))+ theme(legend.position = "none",plot.title = element_text(size=28),axis.title=element_text(size=16),axis.text=element_text(size=16))
-    })
-    
-    Var_7 <- db_all %>% filter(grepl(names_dist$V1[7], Variable))
-    Var_7_melt <- melt(Var_7)
-    output$plot7 <- renderPlot({
-      ggplot(Var_7_melt, aes(x=value, y=variable, fill = variable)) +
-        ylab("Elicited Quantity")+
-        xlab("Value")+
-        geom_boxplot()+ ggtitle(names_dist$V1[7])+
-        scale_fill_manual(values = c("THRESHOLD" = 'red'))+ theme(legend.position = "none",plot.title = element_text(size=28),axis.title=element_text(size=16),axis.text=element_text(size=16))
-    })
-    
-    Var_8 <- db_all %>% filter(grepl(names_dist$V1[8], Variable))
-    Var_8_melt <- melt(Var_8)
-    output$plot8 <- renderPlot({
-      ggplot(Var_8_melt, aes(x=value, y=variable, fill = variable)) +
-        ylab("Elicited Quantity")+
-        xlab("Value")+
-        geom_boxplot()+ ggtitle(names_dist$V1[8])+
-        scale_fill_manual(values = c("THRESHOLD" = 'red'))+ theme(legend.position = "none",plot.title = element_text(size=28),axis.title=element_text(size=16),axis.text=element_text(size=16))
-    })
-    
-    Var_9 <- db_all %>% filter(grepl(names_dist$V1[9], Variable))
-    Var_9_melt <- melt(Var_9)
-    output$plot9 <- renderPlot({
-      ggplot(Var_9_melt, aes(x=value, y=variable, fill = variable)) +
-        ylab("Elicited Quantity")+
-        xlab("Value")+
-        geom_boxplot()+ ggtitle(names_dist$V1[9])+
-        scale_fill_manual(values = c("THRESHOLD" = 'red'))+ theme(legend.position = "none",plot.title = element_text(size=28),axis.title=element_text(size=16),axis.text=element_text(size=16))
-    })
-    
-    Var_10 <- db_all %>% filter(grepl(names_dist$V1[10], Variable))
-    Var_10_melt <- melt(Var_10)
-    output$plot10 <- renderPlot({
-      ggplot(Var_10_melt, aes(x=value, y=variable, fill = variable)) +
-        ylab("Elicited Quantity")+
-        xlab("Value")+
-        geom_boxplot()+ ggtitle(names_dist$V1[10])+
-        scale_fill_manual(values = c("THRESHOLD" = 'red'))+ theme(legend.position = "none",plot.title = element_text(size=28),axis.title=element_text(size=16),axis.text=element_text(size=16))
-    })
-    
-    
-    
-    ### SUMMARY TABLES
-    
+   
     new_tab <- as.data.frame(c(names_dist$V1[1], names_dist$V1[2],names_dist$V1[3],names_dist$V1[4],names_dist$V1[5],
                                names_dist$V1[6],names_dist$V1[7],names_dist$V1[8],names_dist$V1[9],names_dist$V1[10]))
     
@@ -883,19 +780,126 @@ server <- function(input, output,session) {
     
     
     
+    Var_1 <- db_all %>% filter(grepl(names_dist$V1[1], Variable))
+    Var_1_melt <- melt(Var_1)
+    output$plot1 <- renderPlot({
+      ggplot(Var_1_melt, aes(x=value, y=variable, fill = variable)) +
+        ylab("Elicited Quantity")+
+        xlab("Value")+
+        geom_boxplot()+ ggtitle(names_dist$V1[1])+
+        scale_fill_manual(values = c("THRESHOLD" = 'red', "Upper" = "grey", "Median" = "grey", "Lower" = "grey"))+ theme(legend.position = "none",plot.title = element_text(size=28),axis.title=element_text(size=16),axis.text=element_text(size=16))
+    })    
+    
+    
+    
+    Var_2 <- db_all %>% filter(grepl(names_dist$V1[2], Variable))
+    Var_2_melt <- melt(Var_2)
+    output$plot2 <- renderPlot({
+      ggplot(Var_2_melt, aes(x=value, y=variable, fill = variable)) +
+        ylab("Elicited Quantity")+
+        xlab("Value")+
+        geom_boxplot()+ ggtitle(names_dist$V1[2])+
+        scale_fill_manual(values = c("THRESHOLD" = 'red', "Upper" = "grey", "Median" = "grey", "Lower" = "grey"))+ theme(legend.position = "none",plot.title = element_text(size=28),axis.title=element_text(size=16),axis.text=element_text(size=16))
+    })
+    
+    Var_3 <- db_all %>% filter(grepl(names_dist$V1[3], Variable))
+    Var_3_melt <- melt(Var_3)
+    output$plot3 <- renderPlot({
+      ggplot(Var_3_melt, aes(x=value, y=variable, fill = variable)) +
+        ylab("Elicited Quantity")+
+        xlab("Value")+
+        geom_boxplot()+ ggtitle(names_dist$V1[3])+
+        scale_fill_manual(values = c("THRESHOLD" = 'red', "Upper" = "grey", "Median" = "grey", "Lower" = "grey"))+ theme(legend.position = "none",plot.title = element_text(size=28),axis.title=element_text(size=16),axis.text=element_text(size=16))
+    })
+    
+    Var_4 <- db_all %>% filter(grepl(names_dist$V1[4], Variable))
+    Var_4_melt <- melt(Var_4)
+    output$plot4 <- renderPlot({
+      ggplot(Var_4_melt, aes(x=value, y=variable, fill = variable)) +
+        ylab("Elicited Quantity")+
+        xlab("Value")+
+        geom_boxplot()+ ggtitle(names_dist$V1[4])+
+        scale_fill_manual(values = c("THRESHOLD" = 'red', "Upper" = "grey", "Median" = "grey", "Lower" = "grey"))+ theme(legend.position = "none",plot.title = element_text(size=28),axis.title=element_text(size=16),axis.text=element_text(size=16))
+    })
+    
+    Var_5 <- db_all %>% filter(grepl(names_dist$V1[5], Variable))
+    Var_5_melt <- melt(Var_5)
+    output$plot5 <- renderPlot({
+      ggplot(Var_5_melt, aes(x=value, y=variable, fill = variable)) +
+        ylab("Elicited Quantity")+
+        xlab("Value")+
+        geom_boxplot()+ ggtitle(names_dist$V1[5])+
+        scale_fill_manual(values = c("THRESHOLD" = 'red', "Upper" = "grey", "Median" = "grey", "Lower" = "grey"))+ theme(legend.position = "none",plot.title = element_text(size=28),axis.title=element_text(size=16),axis.text=element_text(size=16))
+    })
+    
+    Var_6 <- db_all %>% filter(grepl(names_dist$V1[6], Variable))
+    Var_6_melt <- melt(Var_6)
+    output$plot6 <- renderPlot({
+      ggplot(Var_6_melt, aes(x=value, y=variable, fill = variable)) +
+        ylab("Elicited Quantity")+
+        xlab("Value")+
+        geom_boxplot()+ ggtitle(names_dist$V1[6])+
+        scale_fill_manual(values = c("THRESHOLD" = 'red', "Upper" = "grey", "Median" = "grey", "Lower" = "grey"))+ theme(legend.position = "none",plot.title = element_text(size=28),axis.title=element_text(size=16),axis.text=element_text(size=16))
+    })
+    
+    Var_7 <- db_all %>% filter(grepl(names_dist$V1[7], Variable))
+    Var_7_melt <- melt(Var_7)
+    output$plot7 <- renderPlot({
+      ggplot(Var_7_melt, aes(x=value, y=variable, fill = variable)) +
+        ylab("Elicited Quantity")+
+        xlab("Value")+
+        geom_boxplot()+ ggtitle(names_dist$V1[7])+
+        scale_fill_manual(values = c("THRESHOLD" = 'red', "Upper" = "grey", "Median" = "grey", "Lower" = "grey"))+ theme(legend.position = "none",plot.title = element_text(size=28),axis.title=element_text(size=16),axis.text=element_text(size=16))
+    })
+    
+    Var_8 <- db_all %>% filter(grepl(names_dist$V1[8], Variable))
+    Var_8_melt <- melt(Var_8)
+    output$plot8 <- renderPlot({
+      ggplot(Var_8_melt, aes(x=value, y=variable, fill = variable)) +
+        ylab("Elicited Quantity")+
+        xlab("Value")+
+        geom_boxplot()+ ggtitle(names_dist$V1[8])+
+        scale_fill_manual(values = c("THRESHOLD" = 'red', "Upper" = "grey", "Median" = "grey", "Lower" = "grey"))+ theme(legend.position = "none",plot.title = element_text(size=28),axis.title=element_text(size=16),axis.text=element_text(size=16))
+    })
+    
+    Var_9 <- db_all %>% filter(grepl(names_dist$V1[9], Variable))
+    Var_9_melt <- melt(Var_9)
+    output$plot9 <- renderPlot({
+      ggplot(Var_9_melt, aes(x=value, y=variable, fill = variable)) +
+        ylab("Elicited Quantity")+
+        xlab("Value")+
+        geom_boxplot()+ ggtitle(names_dist$V1[9])+
+        scale_fill_manual(values = c("THRESHOLD" = 'red', "Upper" = "grey", "Median" = "grey", "Lower" = "grey"))+ theme(legend.position = "none",plot.title = element_text(size=28),axis.title=element_text(size=16),axis.text=element_text(size=16))
+    })
+    
+    Var_10 <- db_all %>% filter(grepl(names_dist$V1[10], Variable))
+    Var_10_melt <- melt(Var_10)
+    output$plot10 <- renderPlot({
+      ggplot(Var_10_melt, aes(x=value, y=variable, fill = variable)) +
+        ylab("Elicited Quantity")+
+        xlab("Value")+
+        geom_boxplot()+ ggtitle(names_dist$V1[10])+
+        scale_fill_manual(values = c("THRESHOLD" = 'red', "Upper" = "grey", "Median" = "grey", "Lower" = "grey"))+ theme(legend.position = "none",plot.title = element_text(size=28),axis.title=element_text(size=16),axis.text=element_text(size=16))
+    })
+    
+    
+    
+    ### SUMMARY TABLES
+    
+    
+    
     df_dat <- data.frame(db_all)
     colnames(df_dat)[1] <- "Variable_name"
     
     df_dat$Participant <-sub(".*_", "", df_dat$Variable_name)#
     
-    df_dat$Participant = df_dat$Participant %>% str_remove("-")
     
     
     output$table2 <- renderTable({
       
       df_dat <-dplyr::arrange(df_dat,Participant) #%>% dplyr::select(-ABM)
       colnames(df_dat)[1] <- "Variable_Participant"
-      df_dat2 <- df_dat %>% dplyr::select(-Participant)
+      df_dat2 <- df_dat %>% dplyr::select(-Participant, -name)
       df_dat2$sum_calc <- df_dat2$Lower+df_dat2$Median+df_dat2$Upper+df_dat2$THRESHOLD
       df_dat2 <- df_dat2 %>% filter(sum_calc >0)
       df_dat2 <- df_dat2 %>% select(-sum_calc)
@@ -957,7 +961,14 @@ server <- function(input, output,session) {
     colnames(df_dat_raw)[1]<- "Variable_Participant"
     df_dat_out <<- as.data.frame(df_dat_raw[,1:5])
     
-  }) 
+    
+    
+    
+  })
+     
+  
+  
+  
   
   output$saveBtn_raw <- downloadHandler(
     filename = function() {
@@ -975,9 +986,6 @@ server <- function(input, output,session) {
     
   })
   
-  observeEvent(input$refresh2, {
-    refresh()
-  })
   
   ################### GRAPHING CODE ####
   
@@ -1061,13 +1069,11 @@ server <- function(input, output,session) {
   
   observeEvent(input$saveBtn_input, {
     if(input$password==1234){
+      write_csv(mydata(), "distribution_in_list_3786452_2.csv")
     
-    write_csv(mydata(), paste0("distribution_in_list_3786452_2", ".csv"))
-    
-    input_new <- as.data.frame(read_csv(paste0("distribution_in_list_3786452_2", ".csv")))
-    
-    write_csv(input_new, "distribution_in_list_3786452.csv")
-    
+      input_file <<- read_csv("distribution_in_list_3786452_2.csv")
+      
+      write_csv(input_file, "distribution_in_list_3786452.csv")
     
     }
   }) 
@@ -1078,6 +1084,9 @@ server <- function(input, output,session) {
     
   })
   
+  observeEvent(input$refresh2, {
+    shinyjs::js$refresh_page()
+  })
   
 }
 
